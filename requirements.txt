@@ -1,0 +1,5 @@
+GitPython>=3.1.40
+sv-ttk>=2.6.0
+Pillow>=10.0.0
+tray-manager>=0.1.0
+darkdetect[macos-listener]>=0.8.0
