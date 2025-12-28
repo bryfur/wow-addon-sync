@@ -14,7 +14,7 @@ class ProcessMonitor:
         'world of warcraft.exe',
         # macOS applications
         'World of Warcraft',
-        'WoW'
+        'WoW',
     ]
     
     def __init__(self, on_start_callback: Optional[Callable] = None,
@@ -30,8 +30,10 @@ class ProcessMonitor:
     
     def _is_wow_process(self, proc_name):
         proc_name_lower = proc_name.lower()
-        # Exclude our own process
+        # Exclude our own process and WoW helper processes
         if 'wowsync' in proc_name_lower:
+            return False
+        if 'wowvoiceproxy' in proc_name_lower:
             return False
         return any(pattern.lower() in proc_name_lower for pattern in self.WOW_PROCESS_PATTERNS)
     
