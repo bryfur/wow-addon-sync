@@ -144,6 +144,7 @@ def main():
         
         # macOS ICNS standard sizes - use the naming convention icnsutil expects
         # Format: icon_<size>x<size>.png and icon_<size>x<size>@2x.png for retina
+        # Note: 64x64 is covered by 32x32@2x
         icns_mappings = [
             (16, 32),    # 16x16 and 16x16@2x (32x32)
             (32, 64),    # 32x32 and 32x32@2x (64x64)
