@@ -159,12 +159,15 @@ class MainWindow:
     async def _setup_tray(self):
         """Setup system tray icon with automatic fallback between implementations."""
         try:
+            # Wrap callbacks with root.after() to ensure they run on the main Tkinter thread
+            # This is necessary because tray implementations (especially Windows) may invoke
+            # callbacks from different threads, and Tkinter is not thread-safe
             self.tray_icon = TrayIcon(
-                on_show=self._show_window,
-                on_quit=self.quit_app,
-                on_pull=self._pull_from_remote,
-                on_push=self._push_to_remote,
-                on_toggle_monitor=self._tray_toggle_monitor
+                on_show=lambda: self.root.after(0, self._show_window),
+                on_quit=lambda: self.root.after(0, self.quit_app),
+                on_pull=lambda: self.root.after(0, self._pull_from_remote),
+                on_push=lambda: self.root.after(0, self._push_to_remote),
+                on_toggle_monitor=lambda: self.root.after(0, self._tray_toggle_monitor)
             )
             success, message = await self.tray_icon.setup()
             
