@@ -2,8 +2,7 @@
 macOS native implementation using PyObjC.
 
 Uses PyObjC to directly access macOS NSStatusBar APIs for native
-status bar icon integration. This integrates with the main thread
-using performSelectorOnMainThread to avoid threading issues.
+status bar icon integration.
 """
 
 from typing import Optional, Callable
@@ -200,32 +199,21 @@ class MacOSTrayImpl:
             str(icon_path), callbacks
         )
         
-        # Setup status bar on main thread
-        # performSelectorOnMainThread doesn't return the selector's result,
-        # so we call it and then check if status_item was created
-        self.controller.performSelectorOnMainThread_withObject_waitUntilDone_(
-            objc.selector(self.controller.setupStatusBar, signature=b'B@:'),
-            None,
-            True  # Wait until done
-        )
+        # Setup status bar directly - we're already on the main thread via async_mainloop
+        success = self.controller.setupStatusBar()
         
-        # Check if setup was successful by verifying status_item exists
-        if not self.controller.status_item:
+        if not success:
             raise RuntimeError("Failed to setup status bar")
         
-        # Longer delay to ensure the menu is fully initialized
-        await asyncio.sleep(0.3)
+        # Small delay to ensure the menu is fully initialized
+        await asyncio.sleep(0.1)
     
     def update_monitor_menu(self, is_enabled: bool):
         """Update the auto-sync menu item label."""
         if self.controller and self.controller.monitor_menu_item:
             label = "Disable Auto-Sync" if is_enabled else "Enable Auto-Sync"
-            # Update on main thread
-            self.controller.performSelectorOnMainThread_withObject_waitUntilDone_(
-                objc.selector(self.controller.updateMonitorMenuTitle_, signature=b'v@:@'),
-                label,
-                False  # Don't wait - async update is fine
-            )
+            # Update directly - we're already on the main thread
+            self.controller.updateMonitorMenuTitle_(label)
     
     def cleanup(self):
         """Cleanup tray icon."""
