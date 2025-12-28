@@ -1,15 +1,12 @@
 """
 System tray integration for WoW Sync.
 
-This module provides system tray functionality with two implementations:
-1. tray_manager (preferred) - Cross-platform library with native support
-2. dbus (fallback, Linux only) - D-Bus StatusNotifier protocol for Linux systems
+This module provides system tray functionality with native platform implementations:
+1. macOS - PyObjC NSStatusBar (native macOS menu bar integration)
+2. Windows - Win32 Shell NotifyIcon API (native Windows system tray)
+3. Linux - D-Bus StatusNotifier protocol (Linux system tray standard)
 
-Why two implementations?
-- tray_manager provides the best user experience with native OS integration
-- D-Bus is a fallback specifically for Linux systems where tray_manager may not be available
-- D-Bus StatusNotifier is Linux-specific and not used on Windows/macOS
-- This ensures tray functionality works across different environments
+Each implementation provides native OS integration for the best user experience.
 """
 
 from typing import Optional, Callable
@@ -51,32 +48,35 @@ class TrayIcon:
             except Exception as e:
                 return False, f"System tray not available on macOS: {e}"
         
-        # Windows/Linux: Try tray_manager first
-        try:
-            from .tray_manager_impl import TrayManagerImpl
-            self._impl = TrayManagerImpl(
-                self.on_show, self.on_quit, self.on_pull, 
-                self.on_push, self.on_toggle_monitor
-            )
-            await self._impl.setup()
-            self._impl_type = "tray_manager"
-            return True, "System tray enabled (tray_manager)"
-        except Exception as e:
-            # Fallback to D-Bus StatusNotifier (Linux only)
-            if sys.platform.startswith('linux'):
-                try:
-                    from .tray_dbus import DBusTrayImpl
-                    self._impl = DBusTrayImpl(
-                        self.on_show, self.on_quit, self.on_pull,
-                        self.on_push, self.on_toggle_monitor
-                    )
-                    await self._impl.setup()
-                    self._impl_type = "dbus"
-                    return True, "System tray enabled (D-Bus StatusNotifier)"
-                except Exception as e2:
-                    return False, f"System tray not available: {e}, {e2}"
-            else:
+        # Windows: Use Win32 API (native Windows tray)
+        if sys.platform == 'win32':
+            try:
+                from .tray_windows import WindowsTrayImpl
+                self._impl = WindowsTrayImpl(
+                    self.on_show, self.on_quit, self.on_pull,
+                    self.on_push, self.on_toggle_monitor
+                )
+                await self._impl.setup()
+                self._impl_type = "windows"
+                return True, "System tray enabled (Windows native)"
+            except Exception as e:
+                return False, f"System tray not available on Windows: {e}"
+        
+        # Linux: Use D-Bus StatusNotifier
+        if sys.platform.startswith('linux'):
+            try:
+                from .tray_linux import DBusTrayImpl
+                self._impl = DBusTrayImpl(
+                    self.on_show, self.on_quit, self.on_pull,
+                    self.on_push, self.on_toggle_monitor
+                )
+                await self._impl.setup()
+                self._impl_type = "linux"
+                return True, "System tray enabled (Linux D-Bus StatusNotifier)"
+            except Exception as e:
                 return False, f"System tray not available: {e}"
+        
+        return False, "System tray not supported on this platform"
     
     def update_monitor_menu(self, is_enabled: bool):
         """Update the auto-sync menu item."""

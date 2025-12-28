@@ -1,4 +1,6 @@
 import shutil
+import filecmp
+import os
 from pathlib import Path
 from typing import List, Tuple, Dict, Callable
 from .constants import VERSION_MAP
@@ -84,16 +86,19 @@ class DirectoryManager:
             dest_path = self.repo_path / version / sync_type
             self.log(f"Syncing {sync_type} from {version}...")
             
-            if dest_path.exists():
-                shutil.rmtree(dest_path)
-            
             ignore_fn = self._create_ignore_function(
                 sync_type, version, sync_config_wtf,
                 selected_accounts, selected_characters, available_characters
             )
             
-            shutil.copytree(source_path, dest_path, ignore=ignore_fn)
-            self.log(f"Copied {source_path} to {dest_path}")
+            if dest_path.exists():
+                # Use efficient differential copy
+                copied_count = self._copy_folder_diff(source_path, dest_path, ignore_fn)
+                self.log(f"Updated {copied_count} file(s) in {dest_path}")
+            else:
+                # First time - full copy
+                shutil.copytree(source_path, dest_path, ignore=ignore_fn)
+                self.log(f"Copied {source_path} to {dest_path}")
             
             self._log_filters(sync_type, version, sync_config_wtf, selected_accounts, selected_characters)
     
@@ -126,15 +131,20 @@ class DirectoryManager:
         wtf_dest = version_path / 'WTF'
         self.log(f"Copying WTF to {version_dir.name}...")
         
-        if wtf_dest.exists():
-            shutil.rmtree(wtf_dest)
-        
         ignore_fn = self._create_ignore_function(
             'WTF', version_dir.name, sync_config_wtf,
             selected_accounts, selected_characters, available_characters
         )
         
-        shutil.copytree(wtf_source, wtf_dest, ignore=ignore_fn)
+        if wtf_dest.exists():
+            # Use efficient differential copy
+            copied_count = self._copy_folder_diff(wtf_source, wtf_dest, ignore_fn)
+            self.log(f"  Updated {copied_count} file(s)")
+        else:
+            # First time - full copy
+            shutil.copytree(wtf_source, wtf_dest, ignore=ignore_fn)
+            self.log(f"  Copied WTF files")
+        
         self._log_filters('WTF', version_dir.name, sync_config_wtf, selected_accounts, selected_characters)
     
     def _copy_addons(self, version_dir, version_path):
@@ -146,10 +156,72 @@ class DirectoryManager:
         self.log(f"Copying AddOns to {version_dir.name}...")
         
         if addons_dest.exists():
-            shutil.rmtree(addons_dest)
+            # Use efficient differential copy
+            copied_count = self._copy_folder_diff(addons_source, addons_dest)
+            self.log(f"  Updated {copied_count} file(s)")
+        else:
+            # First time - full copy
+            addons_dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(addons_source, addons_dest)
+            self.log(f"  Copied AddOns files")
+    
+    def _copy_folder_diff(self, source_dir: Path, dest_dir: Path, ignore_fn=None):
+        """Efficiently copy only changed files between directories."""
+        copied_count = 0
         
-        addons_dest.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copytree(addons_source, addons_dest)
+        # Apply ignore function if provided
+        ignored_names = set()
+        if ignore_fn:
+            ignored_names = set(ignore_fn(str(source_dir), [p.name for p in source_dir.iterdir()]))
+        
+        # Get comparison report
+        comparison = filecmp.dircmp(str(source_dir), str(dest_dir), ignore=list(ignored_names))
+        
+        # 1. Copy missing files/folders from source to destination
+        for name in comparison.left_only:
+            if name in ignored_names:
+                continue
+            
+            src_path = source_dir / name
+            dst_path = dest_dir / name
+            
+            if src_path.is_dir():
+                shutil.copytree(str(src_path), str(dst_path))
+                copied_count += sum(1 for _ in src_path.rglob('*') if _.is_file())
+            else:
+                shutil.copy2(str(src_path), str(dst_path))
+                copied_count += 1
+        
+        # 2. Copy modified files from source to destination
+        for name in comparison.diff_files:
+            if name in ignored_names:
+                continue
+            
+            src_path = source_dir / name
+            dst_path = dest_dir / name
+            shutil.copy2(str(src_path), str(dst_path))
+            copied_count += 1
+        
+        # 3. Remove files that exist in destination but not in source (cleanup)
+        for name in comparison.right_only:
+            dst_path = dest_dir / name
+            if dst_path.is_dir():
+                shutil.rmtree(str(dst_path))
+            else:
+                dst_path.unlink()
+        
+        # 4. Recursively handle subdirectories
+        for sub in comparison.common_dirs:
+            if sub in ignored_names:
+                continue
+            
+            sub_ignore_fn = None
+            if ignore_fn:
+                sub_ignore_fn = lambda d, files: ignore_fn(d, files) if str(source_dir / sub) in d else []
+            
+            copied_count += self._copy_folder_diff(source_dir / sub, dest_dir / sub, sub_ignore_fn)
+        
+        return copied_count
     
     def _create_ignore_function(self, sync_type, version, sync_config_wtf,
                                 selected_accounts, selected_characters, available_characters):
@@ -197,7 +269,7 @@ class DirectoryManager:
         return ignore_function
     
     def _log_filters(self, sync_type, version, sync_config_wtf, selected_accounts, selected_characters):
-        filters = []
+        filters = []    
         
         if not sync_config_wtf and sync_type == 'WTF':
             filters.append("Config.wtf excluded")
