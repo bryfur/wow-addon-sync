@@ -24,3 +24,6 @@ dmypy.json
 *.swo
 *~
 .DS_Store
+
+# PyInstaller auto-generated spec files
+*.spec
