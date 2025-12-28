@@ -26,7 +26,7 @@ common_args = [
     '--hidden-import=_cffi_backend',
     '--hidden-import=psutil',
     '--hidden-import=PIL',
-    '--hidden-import=dbus_next',
+    '--hidden-import=dbus_fast',
     '--hidden-import=async_tkinter_loop',
     '--collect-all=sv_ttk',
     '--collect-all=darkdetect',
@@ -36,12 +36,10 @@ common_args = [
 
 # Platform-specific adjustments
 if sys.platform.startswith('linux'):
-    common_args.append('--hidden-import=dbus_next.aio')
+    common_args.append('--hidden-import=dbus_fast.aio')
 elif sys.platform == 'darwin':
     # macOS-specific: set bundle identifier for proper .app
     common_args.append('--osx-bundle-identifier=com.wowsync.app')
-    # Build universal binary for both Intel and Apple Silicon
-    common_args.append('--target-architecture=universal2')
 
 print(f"Building WoW Sync for {sys.platform}...")
 PyInstaller.__main__.run(common_args)
