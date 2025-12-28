@@ -47,7 +47,8 @@ The script configures PyInstaller with the following parameters:
 - GUI mode: No console window
 - Icon: `icons/icon.png`
 - Included data: Icons directory
-- Hidden imports: tkinter, sv_ttk, darkdetect, pygit2, cffi, psutil, PIL, dbus_fast, async_tkinter_loop
+- Hidden imports: tkinter, sv_ttk, darkdetect, pygit2, pygit2._pygit2, cffi, _cffi_backend, psutil, PIL, dbus_fast, async_tkinter_loop, dbus_fast.aio (Linux only)
+- Collect all: sv_ttk, darkdetect, pygit2
 
 ### Manual PyInstaller Build
 
@@ -63,14 +64,20 @@ pyinstaller --name=WoWSync \
     --hidden-import=sv_ttk \
     --hidden-import=darkdetect \
     --hidden-import=pygit2 \
+    --hidden-import=pygit2._pygit2 \
     --hidden-import=cffi \
+    --hidden-import=_cffi_backend \
     --hidden-import=psutil \
     --hidden-import=PIL \
     --hidden-import=dbus_fast \
+    --hidden-import=async_tkinter_loop \
+    --collect-all=sv_ttk \
+    --collect-all=darkdetect \
+    --collect-all=pygit2 \
     wow_sync/__main__.py
 ```
 
-Note: The data separator differs by platform (`--add-data="icons;icons"` on Windows).
+Note: The data separator differs by platform (`--add-data="icons;icons"` on Windows). On Linux, add `--hidden-import=dbus_fast.aio`.
 
 ## Build Artifacts
 
