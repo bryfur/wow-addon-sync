@@ -98,6 +98,7 @@ def main():
         "icon_16.png": 16,
     }
     
+    icon_images = []
     for filename, size in sizes.items():
         output_path = icons_dir / filename
         print(f"Generating {filename} ({size}x{size})...")
@@ -108,6 +109,18 @@ def main():
         # Save as PNG with transparency
         resized.save(output_path, "PNG", optimize=True)
         print(f"  ✓ Saved {output_path}")
+        
+        # Collect images for ICO file (common Windows icon sizes)
+        if size in [16, 32, 48, 64, 128, 256]:
+            icon_images.append(resized)
+    
+    # Generate ICO file for Windows (contains multiple resolutions)
+    ico_path = icons_dir / "icon.ico"
+    print(f"\nGenerating icon.ico with multiple resolutions...")
+    # ICO files should have images sorted by size (smallest first)
+    icon_images.reverse()
+    transparent_img.save(ico_path, format='ICO', sizes=[(16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
+    print(f"  ✓ Saved {ico_path}")
     
     print("\nAll icons generated successfully!")
 

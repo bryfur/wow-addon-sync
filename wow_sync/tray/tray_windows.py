@@ -49,7 +49,8 @@ class WindowsTrayImpl:
         
     async def setup(self):
         """Setup the tray icon using Windows Shell NotifyIcon."""
-        icon_path = ICON_DIR / "icon.png"
+        # Use ICO file for Windows (supports multiple resolutions)
+        icon_path = ICON_DIR / "icon.ico"
         if not icon_path.exists():
             raise RuntimeError(f"Icon not found: {icon_path}")
         
