@@ -52,7 +52,7 @@ The script configures PyInstaller with the following parameters:
 
 ### Manual PyInstaller Build
 
-Alternative manual build command:
+Basic manual build command (adjust for platform-specific requirements):
 
 ```bash
 pyinstaller --name=WoWSync \
@@ -77,7 +77,11 @@ pyinstaller --name=WoWSync \
     wow_sync/__main__.py
 ```
 
-Note: The data separator differs by platform (`--add-data="icons;icons"` on Windows). On Linux, add `--hidden-import=dbus_fast.aio`.
+Notes:
+- Data separator differs by platform: `--add-data="icons;icons"` on Windows
+- On Linux, add `--hidden-import=dbus_fast.aio`
+- On macOS, use `--onedir` instead of `--onefile` for better compatibility
+- For production builds, use the `build.py` script which handles platform-specific configurations automatically
 
 ## Build Artifacts
 
@@ -110,7 +114,7 @@ On tagged releases (v*), artifacts are automatically published to GitHub Release
 
 To ensure build quality, configure the following branch protection rules for main/master:
 1. Require status checks before merging
-2. Require "Build Status Check" to pass
+2. Require the build jobs to pass (select all platform variants: ubuntu-latest, macos-latest, windows-latest)
 3. Require branches to be up to date before merging
 
 These settings ensure all pull requests successfully build on all platforms before merge.
