@@ -37,7 +37,7 @@ pip install -r requirements.txt
 
 1. Run the application:
 ```bash
-python wow_sync.py
+python -m wow_sync
 ```
 
 2. **Set WoW Installation Path**: Click "Browse" and navigate to your World of Warcraft installation directory
