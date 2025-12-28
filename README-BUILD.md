@@ -1,77 +1,116 @@
-# Building WoW Sync for Distribution
+# Build Documentation
 
-## Prerequisites
+This document describes the build process for creating distributable WoW Sync executables.
 
-Install PyInstaller in your virtual environment:
+## Requirements
+
+- Python 3.13
+- PyInstaller 6.17.0
+- Platform-specific dependencies (automatically installed by GitHub Actions)
+
+### Linux Dependencies
 
 ```bash
-pip install pyinstaller
+sudo apt-get update
+sudo apt-get install -y libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-3.0
 ```
 
-## Quick Build
+### Python Dependencies
 
-### Option 1: Using the build script (recommended)
+```bash
+pip install -r requirements.txt
+pip install pyinstaller==6.17.0
+```
+
+## Build Process
+
+### Automated Build (Recommended)
+
+The build process is automated via GitHub Actions. All pull requests and pushes to main/master branches trigger builds on:
+- Ubuntu Latest
+- macOS Latest
+- Windows Latest
+
+The workflow file is located at `.github/workflows/build.yml`.
+
+### Local Build
+
+Execute the build script:
 
 ```bash
 python build.py
 ```
 
-### Option 2: Using the spec file
+The script configures PyInstaller with the following parameters:
+- Entry point: `wow_sync/__main__.py`
+- Build mode: Single file (Windows/Linux), Single directory (macOS)
+- GUI mode: No console window
+- Icon: `icons/icon.png`
+- Included data: Icons directory
+- Hidden imports: tkinter, sv_ttk, darkdetect, pygit2, cffi, psutil, PIL, dbus_fast, async_tkinter_loop
 
-```bash
-pyinstaller WoWSync.spec
-```
+### Manual PyInstaller Build
 
-### Option 3: Manual PyInstaller command
+Alternative manual build command:
 
 ```bash
 pyinstaller --name=WoWSync \
     --onefile \
-    --windowed \
+    --noconsole \
     --icon=icons/icon.png \
     --add-data="icons:icons" \
+    --hidden-import=tkinter \
+    --hidden-import=sv_ttk \
+    --hidden-import=darkdetect \
+    --hidden-import=pygit2 \
+    --hidden-import=cffi \
+    --hidden-import=psutil \
+    --hidden-import=PIL \
+    --hidden-import=dbus_fast \
     wow_sync/__main__.py
 ```
 
-## Platform-Specific Notes
+Note: The data separator differs by platform (`--add-data="icons;icons"` on Windows).
 
-### Windows
-- Creates: `dist/WoWSync.exe`
-- GUI application (no console window)
-- Requires: Windows 10 or later
-- Consider creating an installer with Inno Setup or NSIS
-
-### macOS
-- Creates: `dist/WoWSync.app` (if using BUNDLE in spec)
-- Or: `dist/WoWSync` (single executable)
-- May need to sign the app for distribution
-- Create DMG with: `hdiutil create -volname "WoW Sync" -srcfolder dist/WoWSync.app -ov -format UDZO WoWSync.dmg`
+## Build Artifacts
 
 ### Linux
-- Creates: `dist/WoWSync`
-- Console application (can be hidden in .desktop file)
-- Consider packaging as:
-  - AppImage: Universal Linux package
-  - .deb: Debian/Ubuntu
-  - .rpm: Fedora/RHEL
-  - Flatpak: Cross-distro sandboxed app
+- Executable: `dist/WoWSync`
+- Archive: `dist/WoWSync-Linux.tar.gz`
 
-## Output Location
+### macOS
+- Application bundle: `dist/WoWSync.app`
+- Archive: `dist/WoWSync-macOS.zip`
 
-Built executables are in the `dist/` folder.
+### Windows
+- Executable: `dist/WoWSync.exe`
+- Archive: `dist/WoWSync-Windows.zip`
 
-## Clean Build
+## GitHub Actions Workflow
 
-To remove build artifacts:
+The CI/CD pipeline performs the following steps:
+1. Checkout source code
+2. Set up Python 3.13
+3. Install platform-specific system dependencies
+4. Install Python dependencies
+5. Execute build script
+6. Create platform-specific archive
+7. Upload build artifacts
 
-```bash
-rm -rf build/ dist/ *.spec __pycache__/
-find . -type d -name __pycache__ -exec rm -rf {} +
-```
+On tagged releases (v*), artifacts are automatically published to GitHub Releases.
 
-## Testing the Build
+## Branch Protection
 
-After building, test the executable:
+To ensure build quality, configure the following branch protection rules for main/master:
+1. Require status checks before merging
+2. Require "Build Status Check" to pass
+3. Require branches to be up to date before merging
+
+These settings ensure all pull requests successfully build on all platforms before merge.
+
+## Testing Builds
+
+Test the executable after building:
 
 ```bash
 # Linux/macOS
@@ -81,65 +120,34 @@ After building, test the executable:
 dist\WoWSync.exe
 ```
 
-## Troubleshooting
+## Build Artifacts Cleanup
 
-### Icon not showing
-- Ensure icon file exists in `icons/` folder
-- Windows: Convert PNG to ICO format
-- macOS: Convert PNG to ICNS format
+Remove build artifacts and cache:
 
-### Missing modules at runtime
-- Add to `hiddenimports` in the spec file
-- Check PyInstaller warnings during build
-
-### Large file size
-- Remove `--onefile` to create a folder distribution
-- Use `--exclude-module` for unused packages
-- Enable UPX compression (included by default)
-
-### D-Bus issues on Linux
-- Ensure `dbus_next` is included
-- Test on target Linux distribution
-
-## Creating an Installer
-
-### Windows (Inno Setup)
-1. Install Inno Setup
-2. Create a script referencing `dist/WoWSync.exe`
-3. Compile to create installer
-
-### macOS (DMG)
 ```bash
-create-dmg \
-  --volname "WoW Sync" \
-  --window-pos 200 120 \
-  --window-size 600 400 \
-  --icon-size 100 \
-  --icon "WoWSync.app" 175 120 \
-  --app-drop-link 425 120 \
-  "WoWSync.dmg" \
-  "dist/WoWSync.app"
+rm -rf build/ dist/ *.spec
+find . -type d -name __pycache__ -exec rm -rf {} +
 ```
 
-### Linux (AppImage)
-Use `appimage-builder` or manual AppImage creation tools.
+## Troubleshooting
 
-## Distribution Checklist
+### Missing Modules
+If runtime errors indicate missing modules, add them to the `--hidden-import` list in `build.py`.
 
-- [ ] Test on clean system without Python
-- [ ] Verify all features work (tray, git, sync)
-- [ ] Check file size is reasonable
-- [ ] Include LICENSE and README in package
-- [ ] Test auto-sync functionality
-- [ ] Verify icon displays correctly
-- [ ] Test on target OS version
+### Icon Issues
+- Windows: Icon must be .ico format
+- macOS: Icon must be .icns format
+- Linux: Icon format is flexible
 
-## File Size Optimization
+### Large Executable Size
+Typical executable size: 50-80 MB (includes Python runtime and dependencies).
 
-Typical size: 50-80 MB (includes Python runtime + dependencies)
+To reduce size:
+- Use `--exclude-module` for unused packages
+- Consider directory-based distribution (`--onedir`)
+- Enable UPX compression
 
-To reduce:
-1. Use `--exclude-module` for unused packages
-2. Consider folder distribution instead of `--onefile`
-3. Strip debug symbols: `--strip`
-4. Enable UPX: `--upx-dir=/path/to/upx`
+### Platform-Specific Issues
+- **Linux**: Ensure all GTK and D-Bus dependencies are installed
+- **macOS**: Application may require code signing for distribution
+- **Windows**: Antivirus software may flag unsigned executables
