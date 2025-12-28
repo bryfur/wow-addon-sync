@@ -11,12 +11,11 @@ def enable_dpi_awareness():
     """Enable DPI awareness on Windows to prevent blurry UI."""
     if sys.platform == 'win32':
         try:
-            # Try to use the newer SetProcessDpiAwarenessContext (Windows 10, version 1703+)
             import ctypes
-            from ctypes import wintypes
             
-            # Define DPI awareness context values
+            # Define DPI awareness constants
             DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = ctypes.c_void_p(-4)
+            PROCESS_PER_MONITOR_DPI_AWARE = 2
             
             try:
                 # Try the newest API first (Windows 10 1703+)
@@ -26,7 +25,7 @@ def enable_dpi_awareness():
             except (AttributeError, OSError):
                 # Fall back to SetProcessDpiAwareness (Windows 8.1+)
                 try:
-                    ctypes.windll.shcore.SetProcessDpiAwareness(2)  # PROCESS_PER_MONITOR_DPI_AWARE
+                    ctypes.windll.shcore.SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE)
                 except (AttributeError, OSError):
                     # Final fallback to SetProcessDPIAware (Windows Vista+)
                     try:
