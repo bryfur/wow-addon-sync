@@ -13,7 +13,7 @@ ROOT = Path(__file__).parent
 common_args = [
     'wow_sync/__main__.py',
     '--name=WoWSync',
-    '--onefile',
+    '--onedir' if sys.platform == 'darwin' else '--onefile',
     '--noconsole',
     '--icon=icons/icon.png',
     f'--add-data=icons{";" if sys.platform == "win32" else ":"}icons',
@@ -37,6 +37,11 @@ common_args = [
 # Platform-specific adjustments
 if sys.platform.startswith('linux'):
     common_args.append('--hidden-import=dbus_next.aio')
+elif sys.platform == 'darwin':
+    # macOS-specific: set bundle identifier for proper .app
+    common_args.append('--osx-bundle-identifier=com.wowsync.app')
+    # Build universal binary for both Intel and Apple Silicon
+    common_args.append('--target-architecture=universal2')
 
 print(f"Building WoW Sync for {sys.platform}...")
 PyInstaller.__main__.run(common_args)
