@@ -41,11 +41,18 @@ jobs:
     - name: Build with PyInstaller
       run: python build.py
     
-    - name: Create archive (Linux/macOS)
-      if: runner.os != 'Windows'
+    - name: Create archive (macOS)
+      if: runner.os == 'macOS'
       run: |
         cd dist
-        tar -czf WoWSync-${{ runner.os }}.tar.gz WoWSync
+        # Create a DMG or zip the .app bundle
+        ditto -c -k --keepParent WoWSync.app WoWSync-macOS.zip
+    
+    - name: Create archive (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        cd dist
+        tar -czf WoWSync-Linux.tar.gz WoWSync
     
     - name: Create archive (Windows)
       if: runner.os == 'Windows'
@@ -66,7 +73,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: WoWSync-macOS
-        path: dist/WoWSync-macOS.tar.gz
+        path: dist/WoWSync-macOS.zip
     
     - name: Upload artifact (Windows)
       if: runner.os == 'Windows'
@@ -93,7 +100,7 @@ jobs:
       with:
         files: |
           artifacts/WoWSync-Linux/WoWSync-Linux.tar.gz
-          artifacts/WoWSync-macOS/WoWSync-macOS.tar.gz
+          artifacts/WoWSync-macOS/WoWSync-macOS.zip
           artifacts/WoWSync-Windows/WoWSync-Windows.zip
         draft: false
         prerelease: false
