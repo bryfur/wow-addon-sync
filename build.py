@@ -15,7 +15,7 @@ common_args = [
     '--name=WoWSync',
     '--onedir' if sys.platform == 'darwin' else '--onefile',
     '--noconsole',
-    '--icon=icons/icon.png',
+    '--icon=icons/icon.icns' if sys.platform == 'darwin' else ('--icon=icons/icon.ico' if sys.platform == 'win32' else '--icon=icons/icon.png'),
     f'--add-data=icons{";" if sys.platform == "win32" else ":"}icons',
     '--hidden-import=tkinter',
     '--hidden-import=sv_ttk',
