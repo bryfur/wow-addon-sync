@@ -98,7 +98,7 @@ def main():
         ("icon_16.png", 16),
     ]
     
-    # Process in order from largest to smallest for ICO file
+    # Process all icon sizes and save as PNG files
     icon_sizes_for_ico = {}
     for filename, size in sizes:
         output_path = icons_dir / filename
@@ -118,7 +118,7 @@ def main():
     # Generate ICO file for Windows (contains multiple resolutions)
     ico_path = icons_dir / "icon.ico"
     print(f"\nGenerating icon.ico with multiple resolutions...")
-    # Sort by size (smallest to largest as Windows expects)
+    # Sort sizes for consistent ordering in the ICO file
     sorted_sizes = sorted(icon_sizes_for_ico.keys())
     
     # For ICO files, we need to save with the sizes parameter
