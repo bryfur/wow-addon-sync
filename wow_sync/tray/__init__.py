@@ -9,7 +9,7 @@ This module provides system tray functionality with native platform implementati
 Each implementation provides native OS integration for the best user experience.
 """
 
-from typing import Optional, Callable
+from typing import Optional, Callable, Any
 import asyncio
 import sys
 from threading import Thread
@@ -23,7 +23,7 @@ class TrayIcon:
                  on_pull: Optional[Callable] = None,
                  on_push: Optional[Callable] = None,
                  on_toggle_monitor: Optional[Callable] = None,
-                 tkinter_root = None):
+                 tkinter_root: Optional[Any] = None):
         self.on_show = on_show
         self.on_quit = on_quit
         self.on_pull = on_pull

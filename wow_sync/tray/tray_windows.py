@@ -5,7 +5,7 @@ Uses pywin32 to directly access Windows Shell NotifyIcon APIs for native
 system tray icon integration.
 """
 
-from typing import Optional, Callable
+from typing import Optional, Callable, Any
 import asyncio
 from pathlib import Path
 import threading
@@ -34,7 +34,7 @@ class WindowsTrayImpl:
                  on_pull: Optional[Callable] = None,
                  on_push: Optional[Callable] = None,
                  on_toggle_monitor: Optional[Callable] = None,
-                 tkinter_root = None):
+                 tkinter_root: Optional[Any] = None):
         self.on_show = on_show
         self.on_quit = on_quit
         self.on_pull = on_pull
