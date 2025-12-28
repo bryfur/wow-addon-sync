@@ -88,18 +88,19 @@ def main():
     print(f"  ✓ Saved {original_processed_path}")
     
     # Generate icons at different sizes
-    sizes = {
-        "icon.png": 256,
-        "icon_256.png": 256,
-        "icon_128.png": 128,
-        "icon_64.png": 64,
-        "icon_48.png": 48,
-        "icon_32.png": 32,
-        "icon_16.png": 16,
-    }
+    sizes = [
+        ("icon.png", 256),
+        ("icon_256.png", 256),
+        ("icon_128.png", 128),
+        ("icon_64.png", 64),
+        ("icon_48.png", 48),
+        ("icon_32.png", 32),
+        ("icon_16.png", 16),
+    ]
     
-    icon_images = []
-    for filename, size in sizes.items():
+    # Process in order from largest to smallest for ICO file
+    icon_sizes_for_ico = {}
+    for filename, size in sizes:
         output_path = icons_dir / filename
         print(f"Generating {filename} ({size}x{size})...")
         
@@ -110,17 +111,23 @@ def main():
         resized.save(output_path, "PNG", optimize=True)
         print(f"  ✓ Saved {output_path}")
         
-        # Collect images for ICO file (common Windows icon sizes)
-        if size in [16, 32, 48, 64, 128, 256]:
-            icon_images.append(resized)
+        # Collect images for ICO file (avoid duplicates)
+        if size not in icon_sizes_for_ico:
+            icon_sizes_for_ico[size] = resized
     
     # Generate ICO file for Windows (contains multiple resolutions)
     ico_path = icons_dir / "icon.ico"
     print(f"\nGenerating icon.ico with multiple resolutions...")
-    # ICO files should have images sorted by size (smallest first)
-    icon_images.reverse()
-    transparent_img.save(ico_path, format='ICO', sizes=[(16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
-    print(f"  ✓ Saved {ico_path}")
+    # Sort by size (smallest to largest as Windows expects)
+    sorted_sizes = sorted(icon_sizes_for_ico.keys())
+    
+    # For ICO files, we need to save with the sizes parameter
+    # which tells Pillow to create an ICO with multiple embedded images
+    if sorted_sizes:
+        # Use the original transparent image and let Pillow resize to each size
+        transparent_img.save(ico_path, format='ICO', 
+                           sizes=[(s, s) for s in sorted_sizes])
+        print(f"  ✓ Saved {ico_path} with {len(sorted_sizes)} resolutions: {sorted_sizes}")
     
     print("\nAll icons generated successfully!")
 
