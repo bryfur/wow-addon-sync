@@ -6,11 +6,15 @@ from typing import Optional, Callable
 
 class ProcessMonitor:
     WOW_PROCESS_PATTERNS = [
+        # Windows executables
         'wow.exe',
         'wowclassic.exe',
         'wow-64.exe',
         'wowclassic-64.exe',
         'world of warcraft.exe',
+        # macOS applications
+        'World of Warcraft',
+        'WoW'
     ]
     
     def __init__(self, on_start_callback: Optional[Callable] = None,

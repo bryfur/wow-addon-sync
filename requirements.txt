@@ -2,6 +2,7 @@ pygit2==1.19.0
 sv-ttk==2.6.1
 Pillow==12.0.0
 tray-manager==1.0.5
+pyobjc-framework-Cocoa==12.1; sys_platform == "darwin"
 darkdetect[macos-listener]==0.8.0
 psutil==7.2.0
 dbus-fast==3.1.2

@@ -138,6 +138,7 @@ class GitManager:
         if self.repo_path.exists():
             try:
                 repo = pygit2.Repository(str(self.repo_path))
+                self._ensure_git_config(repo)
                 self.log("Existing repository loaded")
                 return repo
             except Exception:
@@ -146,16 +147,49 @@ class GitManager:
         
         return self.clone()
     
+    def _ensure_git_config(self, repo):
+        """Ensure git user.name and user.email are configured."""
+        config = repo.config
+        
+        # Check if user.name exists
+        try:
+            config['user.name']
+        except KeyError:
+            # Set default name
+            config['user.name'] = 'WoW Sync'
+            self.log("Set git user.name to 'WoW Sync'")
+        
+        # Check if user.email exists
+        try:
+            config['user.email']
+        except KeyError:
+            # Set default email
+            config['user.email'] = 'wowsync@local'
+            self.log("Set git user.email to 'wowsync@local'")
+        
+        # Disable file mode tracking (ignore permission changes)
+        # This prevents spurious changes on macOS/Linux
+        try:
+            if config['core.filemode']:
+                config['core.filemode'] = False
+                self.log("Disabled file mode tracking")
+        except KeyError:
+            config['core.filemode'] = False
+            self.log("Disabled file mode tracking")
+    
     def clone(self):
         self.log(f"Cloning repository from {self.repo_url}...")
         try:
             repo = pygit2.clone_repository(self.repo_url, str(self.repo_path), callbacks=self.credentials)
+            self._ensure_git_config(repo)
             self.log("Repository cloned successfully")
             return repo
         except Exception as e:
             if "exists and is not an empty directory" in str(e):
                 self.log("Repository already exists")
-                return pygit2.Repository(str(self.repo_path))
+                repo = pygit2.Repository(str(self.repo_path))
+                self._ensure_git_config(repo)
+                return repo
             else:
                 self.log("Remote repository not found, creating new local repository...")
                 return self._create_new_repo()
@@ -163,6 +197,9 @@ class GitManager:
     def _create_new_repo(self):
         self.repo_path.mkdir(parents=True, exist_ok=True)
         repo = pygit2.init_repository(str(self.repo_path))
+        
+        # Ensure git config is set before making commits
+        self._ensure_git_config(repo)
         
         gitignore_path = self.repo_path / '.gitignore'
         with open(gitignore_path, 'w') as f:

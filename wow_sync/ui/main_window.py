@@ -274,10 +274,14 @@ class MainWindow:
     
     def _toggle_auto_sync(self):
         if self.auto_sync.get():
-            asyncio.create_task(self._start_process_monitor())
+            # _start_process_monitor has @async_handler, so just call it directly
+            self._start_process_monitor()
         else:
             if self.process_monitor:
+                # _stop_process_monitor is a regular async function, so use create_task
                 asyncio.create_task(self._stop_process_monitor())
+        # Update the menu after toggling
+        self._update_monitor_menu()
     
     async def _stop_process_monitor(self):
         if self.process_monitor:

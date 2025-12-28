@@ -35,8 +35,23 @@ class TrayIcon:
         self._impl_type = None
         
     async def setup(self):
-        """Setup tray icon, trying tray_manager first, then D-Bus (Linux only)."""
-        # Try tray_manager first (preferred implementation)
+        """Setup tray icon with platform-specific implementations."""
+        
+        # macOS: Use PyObjC (native macOS status bar)
+        if sys.platform == 'darwin':
+            try:
+                from .tray_macos import MacOSTrayImpl
+                self._impl = MacOSTrayImpl(
+                    self.on_show, self.on_quit, self.on_pull,
+                    self.on_push, self.on_toggle_monitor
+                )
+                await self._impl.setup()
+                self._impl_type = "macos"
+                return True, "System tray enabled (macOS native)"
+            except Exception as e:
+                return False, f"System tray not available on macOS: {e}"
+        
+        # Windows/Linux: Try tray_manager first
         try:
             from .tray_manager_impl import TrayManagerImpl
             self._impl = TrayManagerImpl(
