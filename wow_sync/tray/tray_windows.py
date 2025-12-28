@@ -66,6 +66,14 @@ class WindowsTrayImpl:
         # Small delay to ensure everything is initialized
         await asyncio.sleep(0.2)
     
+    def _schedule_callback(self, callback: Callable):
+        """Schedule a callback on the main Tkinter thread if available."""
+        if callback:
+            if self.tkinter_root:
+                self.tkinter_root.after(0, callback)
+            else:
+                callback()
+    
     def _create_tray(self, icon_path):
         """Create the tray icon (runs in separate thread)."""
         try:
@@ -127,11 +135,7 @@ class WindowsTrayImpl:
                 self._show_menu()
             elif lparam == win32con.WM_LBUTTONDBLCLK:
                 # Double-click - show window
-                if self.on_show:
-                    if self.tkinter_root:
-                        self.tkinter_root.after(0, self.on_show)
-                    else:
-                        self.on_show()
+                self._schedule_callback(self.on_show)
             return 0
         elif msg == win32con.WM_COMMAND:
             # Menu item selected
@@ -188,35 +192,15 @@ class WindowsTrayImpl:
         """Handle menu item selection."""
         # Schedule callbacks on the Tkinter main thread to avoid threading issues
         if menu_id == 1001:  # Show Window
-            if self.on_show:
-                if self.tkinter_root:
-                    self.tkinter_root.after(0, self.on_show)
-                else:
-                    self.on_show()
+            self._schedule_callback(self.on_show)
         elif menu_id == 1002:  # Pull from Remote
-            if self.on_pull:
-                if self.tkinter_root:
-                    self.tkinter_root.after(0, self.on_pull)
-                else:
-                    self.on_pull()
+            self._schedule_callback(self.on_pull)
         elif menu_id == 1003:  # Push to Remote
-            if self.on_push:
-                if self.tkinter_root:
-                    self.tkinter_root.after(0, self.on_push)
-                else:
-                    self.on_push()
+            self._schedule_callback(self.on_push)
         elif menu_id == 1004:  # Toggle Monitor
-            if self.on_toggle_monitor:
-                if self.tkinter_root:
-                    self.tkinter_root.after(0, self.on_toggle_monitor)
-                else:
-                    self.on_toggle_monitor()
+            self._schedule_callback(self.on_toggle_monitor)
         elif menu_id == 1005:  # Quit
-            if self.on_quit:
-                if self.tkinter_root:
-                    self.tkinter_root.after(0, self.on_quit)
-                else:
-                    self.on_quit()
+            self._schedule_callback(self.on_quit)
     
     def update_monitor_menu(self, is_enabled: bool):
         """Update the auto-sync menu item label."""
