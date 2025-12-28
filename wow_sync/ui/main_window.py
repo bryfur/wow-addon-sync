@@ -164,7 +164,8 @@ class MainWindow:
                 on_quit=self.quit_app,
                 on_pull=self._pull_from_remote,
                 on_push=self._push_to_remote,
-                on_toggle_monitor=self._tray_toggle_monitor
+                on_toggle_monitor=self._tray_toggle_monitor,
+                tkinter_root=self.root
             )
             success, message = await self.tray_icon.setup()
             

@@ -22,12 +22,14 @@ class TrayIcon:
                  on_quit: Optional[Callable] = None,
                  on_pull: Optional[Callable] = None,
                  on_push: Optional[Callable] = None,
-                 on_toggle_monitor: Optional[Callable] = None):
+                 on_toggle_monitor: Optional[Callable] = None,
+                 tkinter_root = None):
         self.on_show = on_show
         self.on_quit = on_quit
         self.on_pull = on_pull
         self.on_push = on_push
         self.on_toggle_monitor = on_toggle_monitor
+        self.tkinter_root = tkinter_root
         self._impl = None
         self._impl_type = None
         
@@ -54,7 +56,8 @@ class TrayIcon:
                 from .tray_windows import WindowsTrayImpl
                 self._impl = WindowsTrayImpl(
                     self.on_show, self.on_quit, self.on_pull,
-                    self.on_push, self.on_toggle_monitor
+                    self.on_push, self.on_toggle_monitor,
+                    self.tkinter_root
                 )
                 await self._impl.setup()
                 self._impl_type = "windows"
