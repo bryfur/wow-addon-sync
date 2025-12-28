@@ -66,7 +66,7 @@ class WindowsTrayImpl:
         # Small delay to ensure everything is initialized
         await asyncio.sleep(0.2)
     
-    def _schedule_callback(self, callback: Callable):
+    def _schedule_callback(self, callback: Optional[Callable]):
         """Schedule a callback on the main Tkinter thread if available."""
         if callback:
             if self.tkinter_root:
