@@ -40,6 +40,11 @@ if sys.platform.startswith('linux'):
 elif sys.platform == 'darwin':
     # macOS-specific: set bundle identifier for proper .app
     common_args.append('--osx-bundle-identifier=com.wowsync.app')
+elif sys.platform == 'win32':
+    # Windows-specific: add DPI awareness manifest
+    manifest_path = ROOT / 'wow_sync.manifest'
+    if manifest_path.exists():
+        common_args.append(f'--manifest={manifest_path}')
 
 print(f"Building WoW Sync for {sys.platform}...")
 PyInstaller.__main__.run(common_args)
