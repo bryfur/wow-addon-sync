@@ -199,7 +199,10 @@ class MacOSTrayImpl:
             str(icon_path), callbacks
         )
         
-        # Setup status bar directly - we're already on the main thread via async_mainloop
+        # Setup status bar directly
+        # This is called from async_mainloop which runs on the main thread,
+        # satisfying AppKit's requirement for UI operations on the main thread.
+        # Callbacks are already wrapped with root.after() for thread safety.
         success = self.controller.setupStatusBar()
         
         if not success:
@@ -212,7 +215,7 @@ class MacOSTrayImpl:
         """Update the auto-sync menu item label."""
         if self.controller and self.controller.monitor_menu_item:
             label = "Disable Auto-Sync" if is_enabled else "Enable Auto-Sync"
-            # Update directly - we're already on the main thread
+            # Update directly - called from MainWindow which is on the main thread
             self.controller.updateMonitorMenuTitle_(label)
     
     def cleanup(self):
