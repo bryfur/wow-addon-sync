@@ -112,9 +112,10 @@ Or use PyInstaller directly with the appropriate icon format:
 ### Platform-Specific Dependencies
 
 Dependencies are conditionally installed based on platform (see `requirements.txt`):
-- `pywin32` - Windows only
-- `pyobjc-framework-Cocoa` - macOS only
-- All other dependencies are cross-platform
+- `pywin32` - Windows only (system tray support)
+- `pyobjc-framework-Cocoa` - macOS only (menu bar support)
+- `dbus-fast` - Cross-platform but primarily used for Linux system tray
+- All other dependencies (pygit2, sv-ttk, Pillow, etc.) are cross-platform
 
 ## Dependency Management
 
