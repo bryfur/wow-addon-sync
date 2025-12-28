@@ -47,12 +47,15 @@ The script configures PyInstaller with the following parameters:
 - GUI mode: No console window
 - Icon: `icons/icon.png`
 - Included data: Icons directory
-- Hidden imports: tkinter, sv_ttk, darkdetect, pygit2, pygit2._pygit2, cffi, _cffi_backend, psutil, PIL, dbus_fast, async_tkinter_loop, dbus_fast.aio (Linux only)
+- Hidden imports: tkinter, sv_ttk, darkdetect, pygit2, pygit2._pygit2, cffi, _cffi_backend, psutil, PIL, dbus_fast, async_tkinter_loop
+- Platform-specific hidden imports: dbus_fast.aio (Linux only)
 - Collect all: sv_ttk, darkdetect, pygit2
 
 ### Manual PyInstaller Build
 
-Basic manual build command (adjust for platform-specific requirements):
+For manual builds, the `build.py` script is recommended as it handles platform-specific configurations automatically.
+
+If building manually, use this base command and adjust as noted below:
 
 ```bash
 pyinstaller --name=WoWSync \
@@ -77,11 +80,10 @@ pyinstaller --name=WoWSync \
     wow_sync/__main__.py
 ```
 
-Notes:
-- Data separator differs by platform: `--add-data="icons;icons"` on Windows
-- On Linux, add `--hidden-import=dbus_fast.aio`
-- On macOS, use `--onedir` instead of `--onefile` for better compatibility
-- For production builds, use the `build.py` script which handles platform-specific configurations automatically
+Platform-specific adjustments:
+- **Windows**: Change `--add-data="icons:icons"` to `--add-data="icons;icons"`
+- **Linux**: Add `--hidden-import=dbus_fast.aio`
+- **macOS**: Change `--onefile` to `--onedir` and add `--osx-bundle-identifier=com.wowsync.app`
 
 ## Build Artifacts
 
