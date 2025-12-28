@@ -9,3 +9,4 @@ dbus-fast==3.1.2
 async-tkinter-loop==0.10.3
 # Build tools (optional, for packaging)
 pyinstaller==6.17.0; extra == "build"
+icnsutil==1.1.0; extra == "build"

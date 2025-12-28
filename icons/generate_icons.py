@@ -3,6 +3,11 @@
 
 from PIL import Image, ImageEnhance
 from pathlib import Path
+try:
+    from icnsutil import IcnsFile
+    ICNS_AVAILABLE = True
+except ImportError:
+    ICNS_AVAILABLE = False
 
 
 def make_transparent(image, *, background=(255, 255, 255), alpha_power=1.0, alpha_floor=6):
@@ -128,6 +133,57 @@ def main():
         transparent_img.save(ico_path, format='ICO', 
                            sizes=[(s, s) for s in sorted_sizes])
         print(f"  ✓ Saved {ico_path} with {len(sorted_sizes)} resolutions: {sorted_sizes}")
+    
+    # Generate ICNS file for macOS (contains multiple resolutions)
+    if ICNS_AVAILABLE:
+        icns_path = icons_dir / "icon.icns"
+        print(f"\nGenerating icon.icns with multiple resolutions...")
+        
+        # Create ICNS file
+        icns = IcnsFile()
+        
+        # macOS ICNS standard sizes - use the naming convention icnsutil expects
+        # Format: icon_<size>x<size>.png and icon_<size>x<size>@2x.png for retina
+        icns_mappings = [
+            (16, 32),    # 16x16 and 16x16@2x (32x32)
+            (32, 64),    # 32x32 and 32x32@2x (64x64)
+            (128, 256),  # 128x128 and 128x128@2x (256x256)
+            (256, 512),  # 256x256 and 256x256@2x (512x512)
+            (512, 1024), # 512x512 and 512x512@2x (1024x1024)
+        ]
+        
+        for normal_size, retina_size in icns_mappings:
+            # Add normal resolution
+            if normal_size in icon_sizes_for_ico:
+                img = icon_sizes_for_ico[normal_size]
+            else:
+                img = transparent_img.resize((normal_size, normal_size), Image.Resampling.LANCZOS)
+            
+            temp_png = icons_dir / f"icon_{normal_size}x{normal_size}.png"
+            img.save(temp_png, "PNG")
+            icns.add_media(file=str(temp_png))
+            temp_png.unlink()
+            
+            # Add retina resolution
+            if retina_size in icon_sizes_for_ico:
+                retina_img = icon_sizes_for_ico[retina_size]
+            elif retina_size <= 1024:
+                retina_img = transparent_img.resize((retina_size, retina_size), Image.Resampling.LANCZOS)
+            else:
+                # For 1024, just use the processed image
+                retina_img = transparent_img.resize((1024, 1024), Image.Resampling.LANCZOS)
+            
+            temp_retina_png = icons_dir / f"icon_{normal_size}x{normal_size}@2x.png"
+            retina_img.save(temp_retina_png, "PNG")
+            icns.add_media(file=str(temp_retina_png))
+            temp_retina_png.unlink()
+        
+        # Write the ICNS file
+        icns.write(str(icns_path))
+        print(f"  ✓ Saved {icns_path} with standard macOS resolutions")
+    else:
+        print(f"\n⚠ Skipping icon.icns generation (icnsutil not available)")
+        print(f"  Install with: pip install icnsutil")
     
     print("\nAll icons generated successfully!")
 

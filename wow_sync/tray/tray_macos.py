@@ -178,7 +178,11 @@ class MacOSTrayImpl:
         
     async def setup(self):
         """Setup the tray icon using macOS NSStatusBar."""
-        icon_path = ICON_DIR / "icon.png"
+        # Use ICNS file for macOS (supports multiple resolutions and retina displays)
+        icon_path = ICON_DIR / "icon.icns"
+        # Fallback to PNG if ICNS not available
+        if not icon_path.exists():
+            icon_path = ICON_DIR / "icon.png"
         if not icon_path.exists():
             raise RuntimeError(f"Icon not found: {icon_path}")
         
