@@ -5,7 +5,7 @@ Uses pywin32 to directly access Windows Shell NotifyIcon APIs for native
 system tray icon integration.
 """
 
-from typing import Optional, Callable, Any
+from typing import Optional, Callable
 import asyncio
 from pathlib import Path
 import threading
@@ -33,14 +33,12 @@ class WindowsTrayImpl:
                  on_quit: Optional[Callable] = None,
                  on_pull: Optional[Callable] = None,
                  on_push: Optional[Callable] = None,
-                 on_toggle_monitor: Optional[Callable] = None,
-                 tkinter_root: Optional[Any] = None):
+                 on_toggle_monitor: Optional[Callable] = None):
         self.on_show = on_show
         self.on_quit = on_quit
         self.on_pull = on_pull
         self.on_push = on_push
         self.on_toggle_monitor = on_toggle_monitor
-        self.tkinter_root = tkinter_root
         
         self.hwnd = None
         self.menu = None
@@ -65,14 +63,6 @@ class WindowsTrayImpl:
         
         # Small delay to ensure everything is initialized
         await asyncio.sleep(0.2)
-    
-    def _schedule_callback(self, callback: Optional[Callable]):
-        """Schedule a callback on the main Tkinter thread if available."""
-        if callback:
-            if self.tkinter_root:
-                self.tkinter_root.after(0, callback)
-            else:
-                callback()
     
     def _create_tray(self, icon_path):
         """Create the tray icon (runs in separate thread)."""
@@ -135,7 +125,8 @@ class WindowsTrayImpl:
                 self._show_menu()
             elif lparam == win32con.WM_LBUTTONDBLCLK:
                 # Double-click - show window
-                self._schedule_callback(self.on_show)
+                if self.on_show:
+                    self.on_show()
             return 0
         elif msg == win32con.WM_COMMAND:
             # Menu item selected
@@ -190,17 +181,21 @@ class WindowsTrayImpl:
     
     def _handle_menu_command(self, menu_id):
         """Handle menu item selection."""
-        # Schedule callbacks on the Tkinter main thread to avoid threading issues
         if menu_id == 1001:  # Show Window
-            self._schedule_callback(self.on_show)
+            if self.on_show:
+                self.on_show()
         elif menu_id == 1002:  # Pull from Remote
-            self._schedule_callback(self.on_pull)
+            if self.on_pull:
+                self.on_pull()
         elif menu_id == 1003:  # Push to Remote
-            self._schedule_callback(self.on_push)
+            if self.on_push:
+                self.on_push()
         elif menu_id == 1004:  # Toggle Monitor
-            self._schedule_callback(self.on_toggle_monitor)
+            if self.on_toggle_monitor:
+                self.on_toggle_monitor()
         elif menu_id == 1005:  # Quit
-            self._schedule_callback(self.on_quit)
+            if self.on_quit:
+                self.on_quit()
     
     def update_monitor_menu(self, is_enabled: bool):
         """Update the auto-sync menu item label."""
