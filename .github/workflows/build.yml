@@ -3,6 +3,8 @@ name: Build WoWSync
 on:
   push:
     branches: [ main, master ]
+    tags:
+      - 'v*'
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:
@@ -72,3 +74,27 @@ jobs:
       with:
         name: WoWSync-Windows
         path: dist/WoWSync-Windows.zip
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          artifacts/WoWSync-Linux/WoWSync-Linux.tar.gz
+          artifacts/WoWSync-macOS/WoWSync-macOS.tar.gz
+          artifacts/WoWSync-Windows/WoWSync-Windows.zip
+        draft: false
+        prerelease: false
+        generate_release_notes: true
