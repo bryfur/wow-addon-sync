@@ -46,6 +46,7 @@ pyinstaller --name=WoWSync \
 - Or: `dist/WoWSync` (single executable)
 - May need to sign the app for distribution
 - Create DMG with: `hdiutil create -volname "WoW Sync" -srcfolder dist/WoWSync.app -ov -format UDZO WoWSync.dmg`
+- **Note**: GitHub Actions builds create separate artifacts for Intel (macOS 13) and Apple Silicon (ARM) architectures
 
 ### Linux
 - Creates: `dist/WoWSync`
