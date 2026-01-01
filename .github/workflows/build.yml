@@ -13,8 +13,23 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.13']
+        include:
+          - os: ubuntu-latest
+            python-version: '3.13'
+            artifact-name: WoWSync-Linux
+            archive-name: WoWSync-Linux.tar.gz
+          - os: macos-13
+            python-version: '3.13'
+            artifact-name: WoWSync-macOS-Intel
+            archive-name: WoWSync-macOS-Intel.zip
+          - os: macos-latest
+            python-version: '3.13'
+            artifact-name: WoWSync-macOS-ARM
+            archive-name: WoWSync-macOS-ARM.zip
+          - os: windows-latest
+            python-version: '3.13'
+            artifact-name: WoWSync-Windows
+            archive-name: WoWSync-Windows.zip
     
     runs-on: ${{ matrix.os }}
     
@@ -46,41 +61,41 @@ jobs:
       run: |
         cd dist
         # Create a DMG or zip the .app bundle
-        ditto -c -k --keepParent WoWSync.app WoWSync-macOS.zip
+        ditto -c -k --keepParent WoWSync.app ${{ matrix.archive-name }}
     
     - name: Create archive (Linux)
       if: runner.os == 'Linux'
       run: |
         cd dist
-        tar -czf WoWSync-Linux.tar.gz WoWSync
+        tar -czf ${{ matrix.archive-name }} WoWSync
     
     - name: Create archive (Windows)
       if: runner.os == 'Windows'
       run: |
         cd dist
-        Compress-Archive -Path WoWSync.exe -DestinationPath WoWSync-Windows.zip
+        Compress-Archive -Path WoWSync.exe -DestinationPath ${{ matrix.archive-name }}
       shell: pwsh
     
     - name: Upload artifact (Linux)
       if: runner.os == 'Linux'
       uses: actions/upload-artifact@v4
       with:
-        name: WoWSync-Linux
-        path: dist/WoWSync-Linux.tar.gz
+        name: ${{ matrix.artifact-name }}
+        path: dist/${{ matrix.archive-name }}
     
     - name: Upload artifact (macOS)
       if: runner.os == 'macOS'
       uses: actions/upload-artifact@v4
       with:
-        name: WoWSync-macOS
-        path: dist/WoWSync-macOS.zip
+        name: ${{ matrix.artifact-name }}
+        path: dist/${{ matrix.archive-name }}
     
     - name: Upload artifact (Windows)
       if: runner.os == 'Windows'
       uses: actions/upload-artifact@v4
       with:
-        name: WoWSync-Windows
-        path: dist/WoWSync-Windows.zip
+        name: ${{ matrix.artifact-name }}
+        path: dist/${{ matrix.archive-name }}
 
   release:
     needs: build
@@ -100,7 +115,8 @@ jobs:
       with:
         files: |
           artifacts/WoWSync-Linux/WoWSync-Linux.tar.gz
-          artifacts/WoWSync-macOS/WoWSync-macOS.zip
+          artifacts/WoWSync-macOS-Intel/WoWSync-macOS-Intel.zip
+          artifacts/WoWSync-macOS-ARM/WoWSync-macOS-ARM.zip
           artifacts/WoWSync-Windows/WoWSync-Windows.zip
         draft: false
         prerelease: false
