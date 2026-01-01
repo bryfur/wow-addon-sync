@@ -18,7 +18,7 @@ jobs:
             python-version: '3.13'
             artifact-name: WoWSync-Linux
             archive-name: WoWSync-Linux.tar.gz
-          - os: macos-15-large
+          - os: macos-15
             python-version: '3.13'
             artifact-name: WoWSync-macOS-Intel
             archive-name: WoWSync-macOS-Intel.zip
